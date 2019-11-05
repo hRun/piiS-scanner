@@ -1,8 +1,8 @@
-# piiS-scanner
-A tool to leverage YARA rules to recursively search for sensitive information in files hosted on shared drives.
+# piiS Scanner
+A tool to leverage YARA rules to recursively search for pii or sensitive information in files hosted on shared drives.
 
 # Usage
-Supply share, credentials, mountpoint and rules as seen in the example.
+Supply share(s), credentials, mountpoint and rules.
 
 # Dependencies and Credits
 YARA for python
@@ -11,16 +11,13 @@ YARA for python
 tba
 
 # TODO
-* Implement CLI
-  * Implement help menu
-  * Implement switches for
-    * Writing results to file
-    * Supplying file with credentials
-    * Supplying file with targets
-    * Supplying targets inline
-    * Supplying file or directory with rules to apply
-    * Supplying rules inline
-    * Being verbose or silent
+* Enhance CLI
+  * Implement switches for writing results to file
+  * Implement credential file syntax check
+  * Implement targets file syntax check
+  * Implement possibility to specify multiple rule files
+  * Implement verbose/silent mode
 * Implement easily parsable output formatting
 * Implement possibility to scan other kinds of shares
-* Implement default rulse set
+* Implement default rule set
+* Write verbose documentation
