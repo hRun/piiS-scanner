@@ -17,23 +17,23 @@ Supply share(s), credentials, mountpoint and rules.
 
 ## Example
 ```
-python3 piis_scanner.py -t "\\\\\\\\10.10.10.2\\\\folder" -p /tmp/credentials/user_creds.txt -r rules/testrule -m /mnt/share
+python3 piis_scanner.py -v -t "\\10.10.10.2\folder" -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share
 ```
 
 
 **Credential file format**
 ```
-_username=xxx_
-_password=xxx_
+username=xxx
+password=xxx
 ```
 
 
 
 **Target file format**
 ```
-_\\\\share1\\folder1_
-_\\\\share2\\_
-_\\\\share3\\folder2_
+\\\\share1\\folder1
+\\\\share2\\
+\\\\share3\\folder2
 ```
 
 **Rule file format**
@@ -48,18 +48,17 @@ tba
 
 # TODO
 * Enhance CLI
-  * Implement switches for writing results to file
   * Implement credential file syntax check
     * Add hint that path must be absolute
     * Maybe alert on lax file permissions
   * Implement targets file syntax check
   * Implement possibility to specify multiple rule files
-  * Implement verbose/silent mode
 * Implement easily parsable output formatting
 * Implement possibility to scan other kinds of data sources
   * HTTP listings
   * FTP(S)
   * any mountable share
   * plain old directories
-* Implement default rule set
+* Replace os.popen and os.system
+* Enhance default rule set
 * Write verbose documentation
