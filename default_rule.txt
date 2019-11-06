@@ -1,0 +1,20 @@
+/*
+    Rule to scan files on shares for sensitive content.
+    E.g. passwords, certificates, ...
+*/
+rule sensitive_information_on_share
+{
+    meta:
+        description  = "File accessible on share contains sensitive information."
+        threat_level = 5
+        in_the_wild  = true
+
+    strings:
+        $pass1  = /[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd](\W|_)/
+        $key1   = "-----BEGIN PRIVATE"
+        $key2   = "-----BEGIN RSA PRIVATE"
+        $basic1 = "Authorization: Basic"
+
+    condition:
+        any of them
+}
