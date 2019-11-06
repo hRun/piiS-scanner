@@ -7,7 +7,6 @@ import os
 import re
 import yara
 
-from docopt   import docopt
 from pathlib  import Path
 
 ## Set up logging
