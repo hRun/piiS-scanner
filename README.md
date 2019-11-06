@@ -31,9 +31,9 @@ password=xxx
 
 **Target file format**
 ```
-\\\\share1\\folder1
-\\\\share2\\
-\\\\share3\\folder2
+\\share1\folder1
+\\share2\
+\\share3\folder2
 ```
 
 **Rule file format**
