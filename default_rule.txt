@@ -11,6 +11,7 @@ rule sensitive_information_on_share
 
     strings:
         $pass1  = /[Pp][Aa][Ss][Ss][Ww][Oo][Rr][Dd](\W|_)/
+        $creds1 = /[Cc][Rr][Ee][Dd][Ee][Nn][Tt][Ii][Aa][Ll][Ss]/
         $key1   = "-----BEGIN PRIVATE"
         $key2   = "-----BEGIN RSA PRIVATE"
         $basic1 = "Authorization: Basic"
