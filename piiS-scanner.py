@@ -5,6 +5,7 @@ import glob
 import logging
 import os
 import re
+import sys
 import yara
 
 from docopt   import docopt
@@ -17,7 +18,7 @@ def logsetup(write, verbose, filename):
     filename = parse(filename)['target'].replace('.', '_')
 
     if write:
-        logging.basicConfig(filename = "{}.log".format(filename), level = level)
+        logging.basicConfig(format = '%(message)s', filename = "{}.log".format(filename), level = level)
     else:
         logging.basicConfig(format = '%(message)s', level = level)
 
@@ -31,6 +32,8 @@ def parse(source):
         target = {'type': source.split('/')[0], 'target': source.split('/')[2], 'directory': '/'.join(s.split('/')[3:])}
     elif re.match(r'^ftps?:\/\/(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
         target = {'type': source.split('/')[0], 'target': source.split('/')[2], 'directory': '/'.join(source.split('/')[3:])}
+    elif re.match(r'#.*', source):
+        target = {'type': 'comment', 'target': source, 'directory': ''}
     else:
         raise ValueError("Unrecognized format for target {0}".format(source))
 
@@ -44,6 +47,9 @@ def mount(source, destination, credentials):
         pass
     if source['type'].startswith('ftp'):
         pass
+    if source['type'].startswith('comment'):
+        logging.info("\tSkipping {0}".format(source['target']))
+        return False
 
     try:
         o = os.popen('mount.cifs {0} {1} -o credentials={2}'.format(target, destination, credentials)).read()
@@ -151,6 +157,7 @@ if __name__ == "__main__":
                     except KeyboardInterrupt:
                         unmount(args.mount)
                         logging.error("Received keyboard interrupt. Aborted scan.")
+                        sys.exit(1)
                     except Exception as e:
                         unmount(args.mount)
                         logging.error(e)
@@ -162,6 +169,7 @@ if __name__ == "__main__":
             except KeyboardInterrupt:
                 unmount(args.mount)
                 logging.error("Received keyboard interrupt. Aborted scan.")
+                sys.exit(1)
             except Exception as e:
                 unmount(args.mount)
                 logging.error(e)
