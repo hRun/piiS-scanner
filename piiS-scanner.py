@@ -7,6 +7,7 @@ import os
 import re
 import yara
 
+from docopt   import docopt
 from pathlib  import Path
 
 ## Set up logging
@@ -22,8 +23,10 @@ def logsetup(write, verbose, filename):
 
 ## Parse scan destination to universably usable format
 def parse(source):
-    if re.match(r'\\(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
+    if re.match(r'\\\%?(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
         target = {'type': 'share', 'target': source.split('\\')[1], 'directory': '\\'.join(source.split('\\')[2:])}
+    if re.match(r'\\\\\%?(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
+        target = {'type': 'share', 'target': source.split('\\')[2], 'directory': '\\'.join(source.split('\\')[3:]).strip('\n')}
     elif re.match(r'^https?:\/\/(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
         target = {'type': source.split('/')[0], 'target': source.split('/')[2], 'directory': '/'.join(s.split('/')[3:])}
     elif re.match(r'^ftps?:\/\/(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
@@ -138,11 +141,11 @@ if __name__ == "__main__":
         parser.print_help()
 
     else:
-        logsetup(args.write, args.v, args.shares if args.shares else args.target)
-
         if args.shares:
             with open(args.shares, 'r') as f:
                 for l in f:
+                    logsetup(args.write, args.v, l)
+
                     try:
                         invoke(l, args.mount, args.pwd, args.rules, args.write)
                     except KeyboardInterrupt:
@@ -152,6 +155,8 @@ if __name__ == "__main__":
                         unmount(args.mount)
                         logging.error(e)
         else:
+            logsetup(args.write, args.v, args.target)
+
             try:
                 invoke(args.target, args.mount, args.pwd, args.rules, args.write)
             except KeyboardInterrupt:
