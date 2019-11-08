@@ -15,11 +15,13 @@ Install dependencies.
 # Usage
 Supply share(s), credentials, mountpoint and rules.
 
-## Example
+## Examples
 ```
 python3 piis_scanner.py -v -t "\\10.10.10.2\folder" -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share
 ```
-
+```
+python3 piis_scanner.py -w -s /tmp/targets -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share
+```
 
 **Credential file format**
 ```
@@ -34,6 +36,7 @@ password=xxx
 \\share1\folder1
 \\share2\
 \\share3\folder2
+# \\share4\folder3 This one will be skipped
 ```
 
 **Rule file format**
@@ -53,6 +56,8 @@ tba
     * Maybe alert on lax file permissions
   * Implement targets file syntax check
   * Implement possibility to specify multiple rule files
+  * Implement switch to specify (wildcard) exceptions)
+* Implement sanity check on specified mountpoint
 * Implement easily parsable output formatting
 * Implement possibility to scan other kinds of data sources
   * HTTP listings
@@ -62,3 +67,4 @@ tba
 * Replace os.popen and os.system
 * Enhance default rule set
 * Write verbose documentation
+* Lots of bug fixing
