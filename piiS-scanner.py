@@ -61,18 +61,18 @@ def mount(logger, write, source, destination, credentials):
         process = subprocess.Popen('mount.cifs {0} {1} -o credentials={2}'.format(target, destination, credentials), stderr=subprocess.PIPE, shell=True)
         error   = process.communicate()
 
-        if re.match(r'mount error', error):
-            raise OSError('{0}'.format(error))
+        if re.match(r'.*mount error\(.*', str(error[1])):
+            raise OSError('{0}'.format(error[1]))
 
         logger.debug("\tMounted {0} to {1}.".format(target, destination))
         return True
     except Exception as e:
-        logger.error(e)
         logger.error("\tFailed to mount {0} to {1}. Skipping scan.".format(target, destination))
+        logger.error("\t\t{0}".format(e))
         
         if write:
-            print(e)
-            print("\tFailed to mount {0} to {1}. Skipping scan.\r\n".format(target, destination))
+            print("\tFailed to mount {0} to {1}. Skipping scan.".format(target, destination))
+            print("\t\t{0}\r\n".format(e))
         
         try:
             unmount(logger, destination)
@@ -124,10 +124,10 @@ def scan(logger, destination, ruleset):
 ## Rountinely invoke all relevant actions in order
 def invoke(logger, source, destination, credentials, rules, write):
     r = open(rules, 'r').read().count('meta:')
-    logger.info("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'], r))
+    logger.info("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
 
     if write:
-        print("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'], r))
+        print("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
     
     
     if(mount(logger, write, source, destination, credentials)):
@@ -175,17 +175,21 @@ if __name__ == "__main__":
                         else:
                             logger = logsetup(args.write, args.v, "{0}-{1}".format(l['target'].replace('.', '_'), l['directory'].replace('.', '_').replace('/', '_').replace('\\', '_')))
                             invoke(logger, l, args.mount, args.pwd, args.rules, args.write)
+                            logging.shutdown()
                     except KeyboardInterrupt:
                         unmount(logger, args.mount)
                         logger.error("Received keyboard interrupt. Aborted scan.")
+                        logging.shutdown()
                         sys.exit(1)
                     except ValueError as e:
                         logger.error(e)
                         logger.error("\r\nSkipping target.")
+                        logging.shutdown()
                         pass
                     except Exception as e:
                         unmount(logger, args.mount)
                         logger.error(e)
+                        logging.shutdown()
         else:
             try:
                 target = parse(args.target)
@@ -194,14 +198,18 @@ if __name__ == "__main__":
                     raise ValueError('Single target cannot be commented out.')
                 logger = logsetup(args.write, args.v, "{0}-{1}".format(target['target'].replace('.', '_'), target['directory'].replace('.', '_').replace('/', '_').replace('\\', '_')))
                 invoke(logger, target, args.mount, args.pwd, args.rules, args.write)
+                logging.shutdown()
             except KeyboardInterrupt:
                 unmount(logger, args.mount)
                 logger.error("Received keyboard interrupt. Aborted scan.")
+                logging.shutdown()
                 sys.exit(1)
             except ValueError as e:
                 print(e)
                 print("\r\nCheck supplied value for -t/--target.")
+                logging.shutdown()
                 pass
             except Exception as e:
                 unmount(logger, args.mount)
                 logger.error(e)
+                logging.shutdown()
