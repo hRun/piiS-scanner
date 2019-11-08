@@ -7,13 +7,31 @@
 /_/  Scan shares for PII and sensitive information using YARA.
 ```
 
-# Installation
-Download or git clone.
+This tool is intended to help you with threat hunting, auditing or IoC collection by enabling you to scan files on remote shares for pii and sensitive information such as passwords or keys. Scanning capabilities for HTTP directory listings and FTP will be added.
 
-Install dependencies.
+# Setup
+Simply download and unpack or git clone.
+
+Make sure you meet all dependencies.
+* Python 3.x
+* yara-python
 
 # Usage
-Supply share(s), credentials, mountpoint and rules.
+Supply share(s), credentials, mountpoint and rules as well as optional arguments.
+
+```
+piis_scanner.py [-h] [-v] -m MOUNT -r RULES [-p PWD] [-s SHARES] [-t TARGET] [-w]
+
+  -h, --help                  show this help message and exit
+  -v, --verbose               Write verbose output
+  -m MOUNT, --mount MOUNT     Absolute path where to temporarily mount shares to
+  -r RULES, --rules RULES     File to read YARA rules from
+  -p PWD, --pass PWD          File to read credentails for authentication from
+  -s SHARES, --shares SHARES  File to read multiple shares to scan from
+  -t TARGET, --target TARGET  Share to scan. Wil be overridden by -s|--shares if specified
+  -w, --write                 Write output to file instead of stdout
+
+```
 
 ## Examples
 ```
@@ -64,5 +82,6 @@ tba
   * any mountable share
   * plain old directories
 * Enhance default rule set
+* Compatibility for Windows
 * Write verbose documentation
 * Lots of bug fixing
