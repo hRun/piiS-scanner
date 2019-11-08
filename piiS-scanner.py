@@ -59,13 +59,22 @@ def mount(logger, write, source, destination, credentials):
 
     try:
         process = subprocess.Popen('mount.cifs {0} {1} -o credentials={2}'.format(target, destination, credentials), stderr=subprocess.PIPE, shell=True)
-        error   = process.communicate()
+        try:
+            error = process.communicate(timeout=60)
+        except subprocess.TimeoutExpired as e:
+            process = subprocess.Popen('mount.cifs {0} {1} -o credentials={2},vers=1.0'.format(target, destination, credentials), stderr=subprocess.PIPE, shell=True)
+            error   = process.communicate(timeout=60)        
+
+        #if re.match(r'.* server does not support the SMB version .*', str(error[1])):
+        #    process = subprocess.Popen('mount.cifs {0} {1} -o credentials={2},vers=1.0'.format(target, destination, credentials), stderr=subprocess.PIPE, shell=True)
+        #    error   = process.communicate(timeout=60)
 
         if re.match(r'.*mount error\(.*', str(error[1])):
             raise OSError('{0}'.format(error[1]))
 
         logger.debug("\tMounted {0} to {1}.".format(target, destination))
         return True
+        
     except Exception as e:
         logger.error("\tFailed to mount {0} to {1}. Skipping scan.".format(target, destination))
         logger.error("\t\t{0}".format(e))
