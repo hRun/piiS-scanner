@@ -3,9 +3,9 @@
 import argparse
 import glob
 import logging
-import os
 import re
 import sys
+import subprocess
 import yara
 
 from docopt   import docopt
@@ -13,14 +13,23 @@ from pathlib  import Path
 
 ## Set up logging
 def logsetup(write, verbose, filename):
-    level = logging.DEBUG if verbose else logging.INFO
-
-    filename = parse(filename)['target'].replace('.', '_')
+    logger = logging.getLogger("".format(filename))
 
     if write:
-        logging.basicConfig(format = '%(message)s', filename = "{}.log".format(filename), level = level)
+        handler = logging.FileHandler("{0}.log".format(filename), mode='w')
     else:
-        logging.basicConfig(format = '%(message)s', level = level)
+        handler = logging.StreamHandler()
+    
+    if verbose:
+        logger.setLevel(logging.DEBUG)
+        handler.setLevel(logging.DEBUG)
+    else:
+        logger.setLevel(logging.INFO)
+        handler.setLevel(logging.INFO)
+        
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    logger.addHandler(handler)
+    return logger
 
 ## Parse scan destination to universably usable format
 def parse(source):
@@ -33,105 +42,113 @@ def parse(source):
     elif re.match(r'^ftps?:\/\/(\w+|\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}).*', source):
         target = {'type': source.split('/')[0], 'target': source.split('/')[2], 'directory': '/'.join(source.split('/')[3:])}
     elif re.match(r'#.*', source):
-        target = {'type': 'comment', 'target': source, 'directory': ''}
+        target = {'type': 'comment', 'target': source.lstrip('#'), 'directory': ''}
     else:
-        raise ValueError("Unrecognized format for target {0}".format(source))
-
+        raise ValueError('Unrecognized format for target "{0}"'.format(source))
+    
     return target
 
 ## Mount specified share at specified location
-def mount(source, destination, credentials):
+def mount(logger, write, source, destination, credentials):
     if source['type'] == 'share':
         target = r'\\\\' + source['target'] + r'\\' + source['directory']
     if source['type'].startswith('http'):
         pass
     if source['type'].startswith('ftp'):
         pass
-    if source['type'].startswith('comment'):
-        logging.info("\tSkipping {0}".format(source['target']))
-        return False
 
     try:
-        o = os.popen('mount.cifs {0} {1} -o credentials={2}'.format(target, destination, credentials)).read()
-        #print("o: {0}".format(o))
-        #if "bad UNC" in o:
-        #    raise ValueError()
-        logging.debug("\tMounted {0} to {1}.".format(target, destination))
+        process = subprocess.Popen('mount.cifs {0} {1} -o credentials={2}'.format(target, destination, credentials), stderr=subprocess.PIPE, shell=True)
+        error   = process.communicate()
+
+        if re.match(r'mount error', error):
+            raise OSError('{0}'.format(error))
+
+        logger.debug("\tMounted {0} to {1}.".format(target, destination))
         return True
-    except:
-        logging.error("\tFailed to mount {0} to {1}. Skipping scan.".format(target, destination))
+    except Exception as e:
+        logger.error(e)
+        logger.error("\tFailed to mount {0} to {1}. Skipping scan.".format(target, destination))
+        
+        if write:
+            print(e)
+            print("\tFailed to mount {0} to {1}. Skipping scan.\r\n".format(target, destination))
+        
         try:
-            unmount(destination)
+            unmount(logger, destination)
         except:
             pass
         return False
 
 ## Unmount specified share
-def unmount(destination):
-    os.system('umount {0}'.format(destination))
-    logging.debug("\tUnmounted {0}.".format(destination))
+def unmount(logger, destination):
+    process = subprocess.Popen('umount {0}'.format(destination), stderr=subprocess.PIPE, shell=True)
+    error   = process.communicate()
+    logger.debug("\tUnmounted {0}.".format(destination))
 
 ## Do stuff if rule matched
-def action(data):
-    logging.info("\r\n\t\tFound match for rule '{0}': {1}".format(data['rule'], data['strings']))
+def action(logger, data):
+    # Do something if needed
     return yara.CALLBACK_CONTINUE
 
 ## Scan specified share with specified ruleset(s)
-def scan(destination, ruleset):
+def scan(logger, destination, ruleset):
     try:
         rules = yara.compile(ruleset)
-        logging.debug("\tYara rules compiled: {0}.".format(ruleset))
+        logger.debug("\tYara rules compiled: {0}.".format(ruleset))
     except Exception as e:
-        logging.error("\tYara rule compilation failed. Aborting scan.")
-        logging.error("\t{0}".format(e))
+        logger.error("\tYara rule compilation failed. Aborting scan.")
+        logger.error("\t{0}".format(e))
         try:
-            unmount(destination)
+            unmount(logger, destination)
         except:
             pass
 
     i = 0
-
+	
     for f in glob.iglob('{0}/**/*'.format(destination), recursive=True):
         try:
-            #logging.debug("\tScanning {0}.".format(str(f)))
+            #logger.debug("\tScanning {0}.".format(str(f)))
             matches = rules.match(f, callback=action, which_callbacks=yara.CALLBACK_MATCHES)
             if matches:
-                logging.info("\t\tin file: {0}.\r\n".format(f))
+                logger.info('\r\n\t\tFound match for rule "{0}"'.format(ruleset))
+                #logger.debug('\t\t\t"{0}"'.format(matches['strings']))
+                logger.info("\t\tin file: {0}.\r\n".format(f))
             i += 1
         except:
-            logging.debug("\t\tFailed to scan {0}. Skipping file.".format(str(f)))
+            logger.debug("\t\tFailed to scan {0}. Skipping file.".format(str(f)))
             pass
-
+			
     return i
 
 ## Rountinely invoke all relevant actions in order
-def invoke(source, destination, credentials, rules, write):
-    logging.info("Starting to scan {0} with {1} rules.".format(source, len(rules)))
+def invoke(logger, source, destination, credentials, rules, write):
+    r = open(rules, 'r').read().count('meta:')
+    logger.info("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'], r))
 
     if write:
-        print("Starting to scan {0} with {1} rules.".format(source, len(rules)))
-
-    source = parse(source)
-
-    if(mount(source, destination, credentials)):
-        i = scan(destination, rules)
-        unmount(destination)
-        logging.info("Done. Scanned {0} files.".format(i))
+        print("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'], r))
+    
+    
+    if(mount(logger, write, source, destination, credentials)):
+        i = scan(logger, destination, rules)
+        unmount(logger, destination)
+        logger.info("Done. Scanned {0} files.\r\n".format(i))
         if write:
-            print("Done. Scanned {0} files.".format(i))
+            print("Done. Scanned {0} files.\r\n".format(i))
 
 
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=35))
     parser.add_argument('-v', '--verbose', dest='v',       help='Write verbose output', action='store_true')
-    parser.add_argument('-m', '--mount',   dest='mount',   help='Mountpoint to temporarily mount shares to', required=True)
+    parser.add_argument('-m', '--mount',   dest='mount',   help='Absolute path where to temporarily mount shares to', required=True)
     parser.add_argument('-r', '--rules',   dest='rules',   help='File to read YARA rules from', required=True)
     parser.add_argument('-p', '--pass',    dest='pwd',    help='File to read credentails for authentication from')
     parser.add_argument('-s', '--shares',  dest='shares',  help='File to read multiple shares to scan from')
     parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Wil be overridden by -s|--shares if specified')
     parser.add_argument('-w', '--write',   dest='write',   help='Write output to file instead of stdout', action='store_true')
-
+    
 
     print("           _ _ _____    _____                                 ")
     print("    ____  (_|_) ___/   / ___/_________ _____  ____  ___  _____")
@@ -150,26 +167,41 @@ if __name__ == "__main__":
         if args.shares:
             with open(args.shares, 'r') as f:
                 for l in f:
-                    logsetup(args.write, args.v, l)
-
                     try:
-                        invoke(l, args.mount, args.pwd, args.rules, args.write)
+                        l = parse(l)
+                        
+                        if l['type'] == 'comment':
+                            print('Skipping commented out target "{0}".\r\n'.format(l['target'].strip('\n')))
+                        else:
+                            logger = logsetup(args.write, args.v, "{0}-{1}".format(l['target'].replace('.', '_'), l['directory'].replace('.', '_').replace('/', '_').replace('\\', '_')))
+                            invoke(logger, l, args.mount, args.pwd, args.rules, args.write)
                     except KeyboardInterrupt:
-                        unmount(args.mount)
-                        logging.error("Received keyboard interrupt. Aborted scan.")
+                        unmount(logger, args.mount)
+                        logger.error("Received keyboard interrupt. Aborted scan.")
                         sys.exit(1)
+                    except ValueError as e:
+                        logger.error(e)
+                        logger.error("\r\nSkipping target.")
+                        pass
                     except Exception as e:
-                        unmount(args.mount)
-                        logging.error(e)
+                        unmount(logger, args.mount)
+                        logger.error(e)
         else:
-            logsetup(args.write, args.v, args.target)
-
             try:
-                invoke(args.target, args.mount, args.pwd, args.rules, args.write)
+                target = parse(args.target)
+                
+                if target['type'] == 'comment':
+                    raise ValueError('Single target cannot be commented out.')
+                logger = logsetup(args.write, args.v, "{0}-{1}".format(target['target'].replace('.', '_'), target['directory'].replace('.', '_').replace('/', '_').replace('\\', '_')))
+                invoke(logger, target, args.mount, args.pwd, args.rules, args.write)
             except KeyboardInterrupt:
-                unmount(args.mount)
-                logging.error("Received keyboard interrupt. Aborted scan.")
+                unmount(logger, args.mount)
+                logger.error("Received keyboard interrupt. Aborted scan.")
                 sys.exit(1)
+            except ValueError as e:
+                print(e)
+                print("\r\nCheck supplied value for -t/--target.")
+                pass
             except Exception as e:
-                unmount(args.mount)
-                logging.error(e)
+                unmount(logger, args.mount)
+                logger.error(e)
