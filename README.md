@@ -54,9 +54,8 @@ tba
   * Implement credential file syntax check
     * Add hint that path must be absolute
     * Maybe alert on lax file permissions
-  * Implement targets file syntax check
   * Implement possibility to specify multiple rule files
-  * Implement switch to specify (wildcard) exceptions)
+  * Implement switch to specify (wildcard) exceptions
 * Implement sanity check on specified mountpoint
 * Implement easily parsable output formatting
 * Implement possibility to scan other kinds of data sources
@@ -64,7 +63,6 @@ tba
   * FTP(S)
   * any mountable share
   * plain old directories
-* Replace os.popen and os.system
 * Enhance default rule set
 * Write verbose documentation
 * Lots of bug fixing
