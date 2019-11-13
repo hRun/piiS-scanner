@@ -156,7 +156,7 @@ if __name__ == "__main__":
     parser.add_argument('-r', '--rules',   dest='rules',   help='File to read YARA rules from', required=True)
     parser.add_argument('-p', '--pass',    dest='pwd',     help='File to read credentails for authentication from')
     parser.add_argument('-s', '--shares',  dest='shares',  help='File to read multiple shares to scan from')
-    parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Wil be overridden by -s|--shares if specified')
+    parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Will be overridden by -s|--shares if specified')
     parser.add_argument('-w', '--write',   dest='write',   help='Write output to file instead of stdout', action='store_true')
     
 
@@ -173,8 +173,8 @@ if __name__ == "__main__":
     if (not args.shares and not args.target) or not args.rules or not args.mount:
         parser.print_help()
     elif args.pwd and not os.path.isabs(args.pwd):
-    	print("Check supplied value for -p/-pass.")
-    	print("Path to credential file must be absolute.")
+        print("Check supplied value for -p/-pass.")
+        print("Path to credential file must be absolute.")
     else:
         if args.shares:
             with open(args.shares, 'r') as f:
