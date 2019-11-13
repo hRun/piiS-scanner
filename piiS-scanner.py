@@ -175,6 +175,9 @@ if __name__ == "__main__":
     elif args.pwd and not os.path.isabs(args.pwd):
         print("Check supplied value for -p/-pass.")
         print("Path to credential file must be absolute.")
+    elif args.pwd and not os.access(args.pwd, os.R_OK):
+    	print("Credentials file could not be read.")
+    	print('Make sure you have read permissions to "{0}".'.format(args.pwd))
     else:
         if args.shares:
             with open(args.shares, 'r') as f:
