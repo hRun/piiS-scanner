@@ -28,14 +28,14 @@ piis_scanner.py [-h] [-v] -m MOUNT -r RULES [-p PWD] [-s SHARES] [-t TARGET] [-w
   -r RULES, --rules RULES     File to read YARA rules from
   -p PWD, --pass PWD          File to read credentails for authentication from (absolute path)
   -s SHARES, --shares SHARES  File to read multiple shares to scan from
-  -t TARGET, --target TARGET  Share to scan. Wil be overridden by -s|--shares if specified
+  -t TARGET, --target TARGET  Share to scan. Enclosed in single quotes. Will be overridden by -s|--shares if specified
   -w, --write                 Write output to file instead of stdout
 
 ```
 
 ## Examples
 ```
-python3 piis_scanner.py -v -t "\\10.10.10.2\folder" -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share
+python3 piis_scanner.py -v -t '\\10.10.10.2\folder' -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share
 ```
 ```
 python3 piis_scanner.py -w -s /tmp/targets -p /tmp/credentials/user_creds.txt -r rules/default_rule.txt -m /mnt/share

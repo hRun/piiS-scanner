@@ -154,9 +154,9 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbose', dest='v',       help='Write verbose output', action='store_true')
     parser.add_argument('-m', '--mount',   dest='mount',   help='Absolute path where to temporarily mount shares to', required=True)
     parser.add_argument('-r', '--rules',   dest='rules',   help='File to read YARA rules from', required=True)
-    parser.add_argument('-p', '--pass',    dest='pwd',     help='File to read credentails for authentication from')
+    parser.add_argument('-p', '--pass',    dest='pwd',     help='File to read credentails for authentication from (absolute path)')
     parser.add_argument('-s', '--shares',  dest='shares',  help='File to read multiple shares to scan from')
-    parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Will be overridden by -s|--shares if specified')
+    parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Enclosed in single quotes. Will be overridden by -s|--shares if specified')
     parser.add_argument('-w', '--write',   dest='write',   help='Write output to file instead of stdout', action='store_true')
     
 
