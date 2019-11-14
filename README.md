@@ -69,10 +69,10 @@ tba
 
 # TODO
 * Enhance CLI
-  * Implement credential file syntax check
-    * Add hint that path must be absolute
-    * Maybe alert on lax file permissions
-  * Implement possibility to specify multiple rule files
+  * Implement credential file syntax check (DONE)
+    * Add hint that path must be absolute (DONE)
+    * Maybe alert on lax file permissions (DONE)
+  * Implement possibility to specify multiple rule files (DONE)
   * Implement switch to specify (wildcard) exceptions
 * Implement sanity check on specified mountpoint
 * Implement easily parsable output formatting
