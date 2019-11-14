@@ -133,19 +133,26 @@ def scan(logger, destination, ruleset):
 
 ## Rountinely invoke all relevant actions in order
 def invoke(logger, source, destination, credentials, rules, write):
-    r = open(rules, 'r').read().count('meta:')
-    logger.info("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
+    if rules.startswith('[') and rules.endswith(']'):
+        rules = rules[1:][:-1]
+        rules = rules.split(',')
+    else:
+        rules = [rules]
 
-    if write:
-        print("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
-    
-    
-    if(mount(logger, write, source, destination, credentials)):
-        i = scan(logger, destination, rules)
-        unmount(logger, destination)
-        logger.info("Done. Scanned {0} files.\r\n".format(i))
+    for rulepath in rules:
+        r = open(rulepath, 'r').read().count('meta:')
+        logger.info("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
+
         if write:
-            print("Done. Scanned {0} files.\r\n".format(i))
+            print("Starting to scan {0}://{1}/{2} with {3} rules.".format(source['type'], source['target'], source['directory'].replace('\\','/'), r))
+        
+        
+        if(mount(logger, write, source, destination, credentials)):
+            i = scan(logger, destination, rulepath)
+            unmount(logger, destination)
+            logger.info("Done. Scanned {0} files.\r\n".format(i))
+            if write:
+                print("Done. Scanned {0} files.\r\n".format(i))
 
 
 if __name__ == "__main__":
@@ -153,8 +160,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(formatter_class=lambda prog: argparse.HelpFormatter(prog, max_help_position=35))
     parser.add_argument('-v', '--verbose', dest='v',       help='Write verbose output', action='store_true')
     parser.add_argument('-m', '--mount',   dest='mount',   help='Absolute path where to temporarily mount shares to', required=True)
-    parser.add_argument('-r', '--rules',   dest='rules',   help='File to read YARA rules from', required=True)
-    parser.add_argument('-p', '--pass',    dest='pwd',     help='File to read credentails for authentication from (absolute path)')
+    parser.add_argument('-r', '--rules',   dest='rules',   help='File to read YARA rules from. Specify multiple rule files like this: [rules/file1,rules/file2]', required=True)
+    parser.add_argument('-p', '--pass',    dest='pwd',     help='File to read credentials for authentication from (absolute path)')
     parser.add_argument('-s', '--shares',  dest='shares',  help='File to read multiple shares to scan from')
     parser.add_argument('-t', '--target',  dest='target',  help='Share to scan. Enclosed in single quotes. Will be overridden by -s|--shares if specified')
     parser.add_argument('-w', '--write',   dest='write',   help='Write output to file instead of stdout', action='store_true')
@@ -176,8 +183,8 @@ if __name__ == "__main__":
         print("Check supplied value for -p/-pass.")
         print("Path to credential file must be absolute.")
     elif args.pwd and not os.access(args.pwd, os.R_OK):
-    	print("Credentials file could not be read.")
-    	print('Make sure you have read permissions to "{0}".'.format(args.pwd))
+        print("Credentials file could not be read.")
+        print('Make sure you have read permissions to "{0}".'.format(args.pwd))
     else:
         if args.shares:
             with open(args.shares, 'r') as f:
