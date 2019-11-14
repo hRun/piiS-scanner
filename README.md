@@ -25,8 +25,8 @@ piis_scanner.py [-h] [-v] -m MOUNT -r RULES [-p PWD] [-s SHARES] [-t TARGET] [-w
   -h, --help                  show this help message and exit
   -v, --verbose               Write verbose output
   -m MOUNT, --mount MOUNT     Absolute path where to temporarily mount shares to
-  -r RULES, --rules RULES     File to read YARA rules from
-  -p PWD, --pass PWD          File to read credentails for authentication from (absolute path)
+  -r RULES, --rules RULES     File to read YARA rules from. Specify multiple rule files like this: [rules/file1,rules/file2]
+  -p PWD, --pass PWD          File to read credentials for authentication from (absolute path)
   -s SHARES, --shares SHARES  File to read multiple shares to scan from
   -t TARGET, --target TARGET  Share to scan. Enclosed in single quotes. Will be overridden by -s|--shares if specified
   -w, --write                 Write output to file instead of stdout
