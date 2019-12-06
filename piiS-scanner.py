@@ -97,7 +97,7 @@ def unmount(logger, destination):
     logger.debug("\tUnmounted {0}.".format(destination))
 
 ## Do stuff if rule matched
-def action(logger, data):
+def action(data):
     # Do something if needed
     return yara.CALLBACK_CONTINUE
 
