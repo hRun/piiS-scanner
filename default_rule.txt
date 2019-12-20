@@ -14,6 +14,7 @@ rule sensitive_information_on_share
         $pass2  = /\-[Pp][Aa][Ss][Ss]\s/
         $pass3  = /\-[Pp][Ww]\s/
         $putty1 = "PuTTY Configuration Manager export file"
+        $putty2 = "PuTTY-User-Key-File"
         $creds1 = /[Cc][Rr][Ee][Dd][Ee][Nn][Tt][Ii][Aa][Ll][Ss]/
         $key1   = /-----BEGIN\s+(\S+\s+)?PRIVATE/
         $key2   = /-----BEGIN\s+(\S+\s+)?ENCRYPTED\s+PRIVATE/
